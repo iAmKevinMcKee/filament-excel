@@ -219,6 +219,12 @@ class ExcelExport implements FromQuery, HasHeadings, HasMapping, ShouldAutoSize,
         $this->resolveWriterType();
         
         $diskName = config('filament-excel.disk', 'filament-excel');
+        
+        // Ensure temp directory exists before exporting
+        $tempPath = config('filament-excel.temp_directory', storage_path('framework/cache/laravel-excel'));
+        if (!file_exists($tempPath)) {
+            mkdir($tempPath, 0755, true);
+        }
 
         if (! $this->isQueued()) {
             return $this->downloadExport($this->getFilename(), $this->getWriterType());

@@ -60,4 +60,15 @@ return [
     |
     */
     'temporary_url_expiration' => (int)env('FILAMENT_EXCEL_URL_EXPIRATION', 24 * 60), // in minutes (24 hours default)
+
+    /*
+    |--------------------------------------------------------------------------
+    | Temporary Directory
+    |--------------------------------------------------------------------------
+    |
+    | Directory used by Laravel Excel to store temporary files during export.
+    | This directory must be writable by the web server.
+    |
+    */
+    'temp_directory' => env('FILAMENT_EXCEL_TEMP_PATH', storage_path('framework/cache/laravel-excel')),
 ];

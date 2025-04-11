@@ -44,6 +44,14 @@ class FilamentExcelServiceProvider extends PackageServiceProvider
         // Set the disk configuration
         config()->set("filesystems.disks.{$diskName}", $diskConfig);
 
+        // Configure and ensure Laravel Excel's temporary directory exists
+        $tempPath = config('filament-excel.temp_directory', storage_path('framework/cache/laravel-excel'));
+        config()->set('excel.temporary_files.local_path', $tempPath);
+        
+        if (!file_exists($tempPath)) {
+            mkdir($tempPath, 0755, true);
+        }
+
         parent::register();
     }
 
