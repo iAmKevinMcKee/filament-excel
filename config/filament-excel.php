@@ -63,12 +63,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Temporary Directory
+    | Temporary Files
     |--------------------------------------------------------------------------
     |
-    | Directory used by Laravel Excel to store temporary files during export.
-    | This directory must be writable by the web server.
+    | Settings for temporary files during the Excel export process.
     |
     */
-    'temp_directory' => env('FILAMENT_EXCEL_TEMP_PATH', storage_path('framework/cache/laravel-excel')),
+    'temporary_files' => [
+        // Use local or remote disk for temporary files
+        'disk' => env('FILAMENT_EXCEL_TEMP_DISK', 'local'),
+        
+        // Local disk settings
+        'local_path' => env('FILAMENT_EXCEL_TEMP_PATH', storage_path('framework/cache/laravel-excel')),
+        
+        // Remote disk settings (e.g., 's3')
+        'remote_disk' => env('FILAMENT_EXCEL_TEMP_REMOTE_DISK', 's3'),
+        'remote_prefix' => env('FILAMENT_EXCEL_TEMP_REMOTE_PREFIX', 'temp/excel'),
+    ],
 ];

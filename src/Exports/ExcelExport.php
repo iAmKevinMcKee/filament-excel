@@ -213,6 +213,37 @@ class ExcelExport implements FromQuery, HasHeadings, HasMapping, ShouldAutoSize,
         return $this;
     }
 
+    /**
+     * Prepare and configure the temp directory for exports
+     */
+    protected function prepareExportTempDirectory(): void
+    {
+        $tempDiskType = config('filament-excel.temporary_files.disk', 'local');
+        
+        if ($tempDiskType === 'local') {
+            $tempPath = config('filament-excel.temporary_files.local_path', storage_path('framework/cache/laravel-excel'));
+            
+            // Ensure the directory exists and is writable
+            if (!file_exists($tempPath)) {
+                try {
+                    mkdir($tempPath, 0755, true);
+                } catch (\Exception $e) {
+                    // Log the error but don't fail - Laravel Excel will attempt to create the directory if needed
+                    \Illuminate\Support\Facades\Log::warning("Failed to create Excel temp directory: {$e->getMessage()}");
+                }
+            }
+            
+            // Double-check directory exists and is writable
+            if (!is_writable($tempPath) && file_exists($tempPath)) {
+                try {
+                    chmod($tempPath, 0755);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning("Failed to make Excel temp directory writable: {$e->getMessage()}");
+                }
+            }
+        }
+    }
+
     public function export()
     {
         $this->resolveFilename();
@@ -220,11 +251,8 @@ class ExcelExport implements FromQuery, HasHeadings, HasMapping, ShouldAutoSize,
         
         $diskName = config('filament-excel.disk', 'filament-excel');
         
-        // Ensure temp directory exists before exporting
-        $tempPath = config('filament-excel.temp_directory', storage_path('framework/cache/laravel-excel'));
-        if (!file_exists($tempPath)) {
-            mkdir($tempPath, 0755, true);
-        }
+        // Prepare temp directory
+        $this->prepareExportTempDirectory();
 
         if (! $this->isQueued()) {
             return $this->downloadExport($this->getFilename(), $this->getWriterType());

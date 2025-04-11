@@ -44,12 +44,44 @@ class FilamentExcelServiceProvider extends PackageServiceProvider
         // Set the disk configuration
         config()->set("filesystems.disks.{$diskName}", $diskConfig);
 
-        // Configure and ensure Laravel Excel's temporary directory exists
-        $tempPath = config('filament-excel.temp_directory', storage_path('framework/cache/laravel-excel'));
-        config()->set('excel.temporary_files.local_path', $tempPath);
+        // Configure Laravel Excel's temporary files storage
+        $tempDiskType = config('filament-excel.temporary_files.disk', 'local');
         
-        if (!file_exists($tempPath)) {
-            mkdir($tempPath, 0755, true);
+        if ($tempDiskType === 'local') {
+            // Configure local temp path
+            $tempPath = config('filament-excel.temporary_files.local_path', storage_path('framework/cache/laravel-excel'));
+            config()->set('excel.temporary_files.local_path', $tempPath);
+            
+            // Ensure local directory exists with proper permissions
+            if (!file_exists($tempPath)) {
+                try {
+                    mkdir($tempPath, 0755, true);
+                } catch (\Exception $e) {
+                    // Will be created when needed, so just log warning for now
+                    \Illuminate\Support\Facades\Log::warning("Failed to create Laravel Excel temp directory: {$e->getMessage()}");
+                }
+            } elseif (!is_writable($tempPath)) {
+                try {
+                    chmod($tempPath, 0755);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning("Failed to make Laravel Excel temp directory writable: {$e->getMessage()}");
+                }
+            }
+            
+            // Always ensure Laravel Excel uses direct disk writing to avoid fopen() issues
+            config()->set('excel.temporary_files.force_disk_write', true);
+            
+        } else {
+            // Configure remote disk for temp files
+            $remoteDisk = config('filament-excel.temporary_files.remote_disk', 's3');
+            $remotePrefix = config('filament-excel.temporary_files.remote_prefix', 'temp/excel');
+            
+            // Update Laravel Excel config
+            config()->set('excel.temporary_files.remote_disk', $remoteDisk);
+            config()->set('excel.temporary_files.remote_prefix', $remotePrefix);
+            
+            // Enable remote temporary files
+            config()->set('excel.temporary_files.use_remote', true);
         }
 
         parent::register();
@@ -59,7 +91,10 @@ class FilamentExcelServiceProvider extends PackageServiceProvider
     {
         $package->name('filament-excel')
             ->hasConfigFile()
-            ->hasCommands([PruneExportsCommand::class])
+            ->hasCommands([
+                PruneExportsCommand::class,
+                Commands\CleanupTempFilesCommand::class,
+            ])
             ->hasRoutes(['web'])
             ->hasTranslations();
     }

@@ -460,3 +460,30 @@ Now, run `composer update`.
 
 ## Credits
 This package is based on the excellent [Laravel Nova Excel Package](https://docs.laravel-excel.com/nova/1.x/exports) by SpartnerNL and ported to [Filament](https://filamentadmin.com/).
+
+## S3 Storage Support
+
+This package supports using Amazon S3 (or other remote storage drivers) for both final exports and temporary files. 
+
+### Configuration
+
+You can configure the storage options through your `.env` file:
+
+```env
+# Main storage configuration
+FILAMENT_EXCEL_DISK=filament-excel
+FILAMENT_EXCEL_DISK_DRIVER=s3
+FILAMENT_EXCEL_S3_PATH=exports/excel
+FILAMENT_EXCEL_AUTO_DELETE=true
+FILAMENT_EXCEL_URL_EXPIRATION=1440
+
+# Temporary files configuration
+FILAMENT_EXCEL_TEMP_DISK=local        # Use 'local' or 'remote'
+FILAMENT_EXCEL_TEMP_PATH=/path/to/dir # For local temporary files
+FILAMENT_EXCEL_TEMP_REMOTE_DISK=s3    # For remote temporary files
+FILAMENT_EXCEL_TEMP_REMOTE_PREFIX=temp/excel
+```
+
+For most use cases, we recommend using local storage for temporary files (`FILAMENT_EXCEL_TEMP_DISK=local`) and S3 for the final exports. This provides better performance while still benefiting from S3 for the final storage.
+
+See the configuration file for more details.
